@@ -1,0 +1,16 @@
+.idea/*
+venv/
+.coverage
+.pytest_cache
+src/__pycache__/
+tests/
+demo_asennukset.sh
+codepipeline-codecommit-events-yaml.yaml
+pyynot.http
+appspec.yml
+buildspec.yml
+.coveragerc
+scripts/
+.github
+tox.ini
+README.md
