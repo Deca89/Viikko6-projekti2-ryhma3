@@ -1,49 +1,80 @@
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from flask import Flask, render_template, request, url_for, flash, redirect
 from werkzeug.exceptions import abort
 from datetime import datetime
 from init_db import do_init
+import boto3
+from botocore.exceptions import ClientError
+
+def get_secret():
+    secret_name = "group3project2"
+    region_name = "us-east-2"
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        # For a list of exceptions thrown, see
+        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+        raise e
+
+    # Decrypts secret using the associated KMS key.
+    secret = get_secret_value_response['SecretString']
+
+    return secret
 
 
 def get_db_connection():
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    return conn
-
-#
+    database_secrets = eval(get_secret())
+    con = psycopg2.connect(host=database_secrets['host'], database=database_secrets['database'], port=database_secrets['port'], user=database_secrets['user'], password=database_secrets['password'])
+    return con
 
 
 def get_post(post_id):
-    conn = get_db_connection()
-    post = conn.execute('SELECT * FROM posts WHERE id = ?',
-                        (post_id,)).fetchone()
-    conn.close()
+    con = get_db_connection()
+    cursor = con.cursor()
+    SQL = 'SELECT * FROM posts WHERE id = %s;'
+    cursor.execute(SQL, (post_id,))
+    post = cursor.fetchone()
+    cursor.close()
     if post is None:
         abort(404)
-    return post
+    postal = {'id': post[0], 'created': post[1], 'title': post[2], 'content': post[3]}
+    postal['created'] = format_date(postal['created'])
+    return postal
 
 
 app = Flask(__name__)
-do_init()
-app.config['SECRET_KEY'] = 'do_not_touch_or_you_will_be_fired'
 
 
 # this function is used to format date to a finnish time format from database format
 # e.g. 2021-07-20 10:36:36 is formateed to 20.07.2021 klo 10:36
 def format_date(post_date):
-    isodate = post_date.replace(' ', 'T')
-    newdate = datetime.fromisoformat(isodate)
-    return newdate.strftime('%d.%m.%Y') + ' klo ' + newdate.strftime('%H:%M')
+    return post_date.strftime('%d.%m.%Y') + ' klo ' + post_date.strftime('%H:%M')
 
 
 # this index() gets executed on the front page where all the posts are
 @app.route('/')
 def index():
     conn = get_db_connection()
-    posts = conn.execute('SELECT * FROM posts').fetchall()
-    conn.close()
+    cursor = conn.cursor()
+    SQL = 'SELECT * FROM posts;'
+    cursor.execute(SQL)
+    posts = cursor.fetchall()
+    cursor.close()
     # we need to iterate over all posts and format their date accordingly
-    dictrows = [dict(row) for row in posts]
+    dictrows = []
+    for post in posts:
+        dictrows.append({'id': post[0], 'created': post[1], 'title': post[2], 'content': post[3]})
     for post in dictrows:
         # using our custom format_date(...)
         post['created'] = format_date(post['created'])
@@ -53,7 +84,7 @@ def index():
 # here we get a single post and return it to the browser
 @app.route('/<int:post_id>')
 def post(post_id):
-    post = dict(get_post(post_id))
+    post = get_post(post_id)
     return render_template('post.html', post=post)
 
 
@@ -63,13 +94,13 @@ def create():
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
-
         if not title:
             flash('Title is required!')
         else:
             conn = get_db_connection()
-            conn.execute('INSERT INTO posts (title, content) VALUES (?, ?)',
-                         (title, content))
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            SQL = 'INSERT INTO posts (title, content) VALUES (%s, %s);'
+            cursor.execute(SQL, (title, content))
             conn.commit()
             conn.close()
             return redirect(url_for('index'))
@@ -89,9 +120,9 @@ def edit(id):
             flash('Title is required!')
         else:
             conn = get_db_connection()
-            conn.execute('UPDATE posts SET title = ?, content = ?'
-                         ' WHERE id = ?',
-                         (title, content, id))
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            SQL = 'UPDATE posts SET title = %s, content = %s WHERE id = %s;'
+            cursor.execute(SQL, (title, content, id))
             conn.commit()
             conn.close()
             return redirect(url_for('index'))
@@ -100,12 +131,13 @@ def edit(id):
 
 
 # Here we delete a SINGLE post.
-@app.route('/<int:id>/delete', methods=('POST',))
+@app.route('/<int:id>/delete', methods=('GET', 'POST'))
 def delete(id):
     post = get_post(id)
     conn = get_db_connection()
-    conn.execute('DELETE FROM posts')
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    SQL = 'DELETE FROM posts WHERE id = %s;'
+    cursor.execute(SQL, (id,))
     conn.commit()
     conn.close()
-    flash('"{}" was successfully deleted!'.format(post['title']))
     return redirect(url_for('index'))
