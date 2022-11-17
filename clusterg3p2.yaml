@@ -57,6 +57,7 @@ Resources:
               - 'sts:AssumeRole'
       RoleName: !Ref EKSIAMRoleName
       ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
         - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
         - arn:aws:iam::aws:policy/AmazonEKSServicePolicy
   VPC:
@@ -300,6 +301,8 @@ Resources:
   EKSNodegroup:
     Type: 'AWS::EKS::Nodegroup'
     Properties:
+      InstanceTypes: 
+        - t3.small
       ClusterName: !Ref EKSClusterName
       NodeRole: arn:aws:iam::341014156608:role/g3p2nodegrouprole
       ScalingConfig:
@@ -309,7 +312,8 @@ Resources:
       Subnets:
         - !Ref PublicSubnet01
         - !Ref PublicSubnet02
-    DependsOn: [EKSCluster]
+    DependsOn: 
+      - EKSCluster
 
 Outputs:
   SubnetIds:
