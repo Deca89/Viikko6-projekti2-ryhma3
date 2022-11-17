@@ -170,6 +170,7 @@ Resources:
     Metadata:
       Comment: Subnet 01
     Properties:
+      MapPublicIpOnLaunch: true
       AvailabilityZone:
         Fn::Select:
         - '0'
@@ -187,6 +188,7 @@ Resources:
     Metadata:
       Comment: Subnet 02
     Properties:
+      MapPublicIpOnLaunch: true
       AvailabilityZone:
         Fn::Select:
         - '1'
@@ -294,6 +296,20 @@ Resources:
         - !Ref PrivateSubnet01
         - !Ref PrivateSubnet02
     DependsOn: [EKSIAMRole, PublicSubnet01, PublicSubnet02, PrivateSubnet01, PrivateSubnet02, ControlPlaneSecurityGroup]
+  
+  EKSNodegroup:
+    Type: 'AWS::EKS::Nodegroup'
+    Properties:
+      ClusterName: !Ref EKSClusterName
+      NodeRole: arn:aws:iam::341014156608:role/g3p2nodegrouprole
+      ScalingConfig:
+        MinSize: 2
+        DesiredSize: 2
+        MaxSize: 7
+      Subnets:
+        - !Ref PublicSubnet01
+        - !Ref PublicSubnet02
+    DependsOn: [EKSCluster]
 
 Outputs:
   SubnetIds:
