@@ -1,10 +1,11 @@
-FROM python:3.8-slim-buster
-
-WORKDIR /python-docker
-
-COPY . .
-
-RUN pip install --no-cache-dir -r requirements.txt
+# syntax=docker/dockerfile:1
+FROM python:3.7-alpine
+WORKDIR /code
+ENV FLASK_APP=app.py
+ENV FLASK_RUN_HOST=0.0.0.0
+RUN apk add --no-cache gcc musl-dev linux-headers
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
 EXPOSE 5000
-
-CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0"]
+COPY . .
+CMD ["flask", "run"]
