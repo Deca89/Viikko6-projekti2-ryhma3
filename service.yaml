@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: r3p2
+spec:
+  selector:
+    app: r3p2
+  type: LoadBalancer
+  ports:
+   -  protocol: TCP
+      port: 80
+      targetPort: 5000

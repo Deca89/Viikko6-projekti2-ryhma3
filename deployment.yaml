@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: r3p2
+  labels:
+    app: r3p2
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: r3p2
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: r3p2
+    spec:
+      containers:
+      - image: 341014156608.dkr.ecr.us-east-2.amazonaws.com/r3p2:latest
+        imagePullPolicy: Always
+        name: r3p2
+        ports:
+        - containerPort: 5000
+          protocol: TCP
