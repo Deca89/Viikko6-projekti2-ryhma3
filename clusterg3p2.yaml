@@ -282,42 +282,46 @@ Resources:
         ToPort: 5432
         CidrIp: 0.0.0.0/0
       
-  EKSCluster:
-    Type: AWS::EKS::Cluster
-    Properties:
-      Name: !Ref EKSClusterName
-      RoleArn: !GetAtt EKSIAMRole.Arn
-      ResourcesVpcConfig:
-        SecurityGroupIds:
-        - !Ref ControlPlaneSecurityGroup
-        SubnetIds:
-        - !Ref PublicSubnet01
-        - !Ref PublicSubnet02
-        - !Ref PrivateSubnet01
-        - !Ref PrivateSubnet02
-    DependsOn: [EKSIAMRole, PublicSubnet01, PublicSubnet02, PrivateSubnet01, PrivateSubnet02, ControlPlaneSecurityGroup]
+#   EKSCluster:
+#     Type: AWS::EKS::Cluster
+#     Properties:
+#       Name: !Ref EKSClusterName
+#       RoleArn: !GetAtt EKSIAMRole.Arn
+#       ResourcesVpcConfig:
+#         SecurityGroupIds:
+#         - !Ref ControlPlaneSecurityGroup
+#         SubnetIds:
+#         - !Ref PublicSubnet01
+#         - !Ref PublicSubnet02
+#         - !Ref PrivateSubnet01
+#         - !Ref PrivateSubnet02
+#     DependsOn: [EKSIAMRole, PublicSubnet01, PublicSubnet02, PrivateSubnet01, PrivateSubnet02, ControlPlaneSecurityGroup]
   
-  EKSNodegroup:
-    Type: 'AWS::EKS::Nodegroup'
-    Properties:
-      ClusterName: !Ref EKSClusterName
-      NodeRole: arn:aws:iam::341014156608:role/g3p2nodegrouprole
-      ScalingConfig:
-        MinSize: 2
-        DesiredSize: 2
-        MaxSize: 7
-      Subnets:
-        - !Ref PublicSubnet01
-        - !Ref PublicSubnet02
-    DependsOn: [EKSCluster]
+#   EKSNodegroup:
+#     Type: 'AWS::EKS::Nodegroup'
+#     Properties:
+#       ClusterName: !Ref EKSClusterName
+#       NodeRole: arn:aws:iam::341014156608:role/g3p2nodegrouprole
+#       ScalingConfig:
+#         MinSize: 2
+#         DesiredSize: 2
+#         MaxSize: 7
+#       Tags: {
+#               key: kubernetes.io/cluster/EKSClusterNameG3P2,
+#               value: owned
+#             }
+#       Subnets:
+#         - !Ref PublicSubnet01
+#         - !Ref PublicSubnet02
+#     DependsOn: [EKSCluster]
 
-Outputs:
-  SubnetIds:
-    Description: Subnets IDs in the VPC
-    Value: !Join [ ",", [ !Ref PublicSubnet01, !Ref PublicSubnet02, !Ref PrivateSubnet01, !Ref PrivateSubnet02 ] ]
-  SecurityGroups:
-    Description: Security group for the cluster control plane communication with worker nodes
-    Value: !Join [ ",", [ !Ref ControlPlaneSecurityGroup ] ]
-  VpcId:
-    Description: The VPC Id
-    Value: !Ref VPC
+# Outputs:
+#   SubnetIds:
+#     Description: Subnets IDs in the VPC
+#     Value: !Join [ ",", [ !Ref PublicSubnet01, !Ref PublicSubnet02, !Ref PrivateSubnet01, !Ref PrivateSubnet02 ] ]
+#   SecurityGroups:
+#     Description: Security group for the cluster control plane communication with worker nodes
+#     Value: !Join [ ",", [ !Ref ControlPlaneSecurityGroup ] ]
+#   VpcId:
+#     Description: The VPC Id
+#     Value: !Ref VPC
