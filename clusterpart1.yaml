@@ -6,7 +6,7 @@ metadata:
   region: us-west-1
   version: "1.21"
 
-subnets: [g3p2-PublicSubnet02, g3p2-PublicSubnet01]
+availabilityZones: [us-west-1a, us-west-1c]
 
 managedNodeGroups:
 - name: nodegroup

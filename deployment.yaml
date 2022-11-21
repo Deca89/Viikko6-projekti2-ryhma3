@@ -6,7 +6,7 @@ metadata:
     app: r3p2
   namespace: default
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: r3p2
@@ -21,7 +21,7 @@ spec:
         app: r3p2
     spec:
       containers:
-      - image: public.ecr.aws/l7f7h3x5/g3p2
+      - image: public.ecr.aws/l7f7h3x5/g3p2:latest
         imagePullPolicy: Always
         name: r3p2
         ports:
